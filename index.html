@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es" class="dark" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruleta de Estudio - Ingeniería de Software</title>
+  
+  <!-- Custom SVG FavIcon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%230b0f19' stroke='%236366f1' stroke-width='7'/%3E%3Cpolygon points='50,14 43,30 57,30' fill='%23f43f5e'/%3E%3Cpath d='M50 25 L50 75 M25 50 L75 50 M32 32 L68 68 M32 68 L68 32' stroke='%2338bdf8' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%236366f1' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E">
+
+  <!-- Google Fonts Preconnect for optimal load speed -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+
+  <!-- Loading Splash Screen -->
+  <div id="loadingScreen">
+    <div class="flex flex-col items-center">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-400 to-emerald-400 p-[2px] loading-logo-spin shadow-2xl mb-4">
+        <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+          <i class="fa-solid fa-dharmachakra text-indigo-400 text-2xl animate-spin"></i>
+        </div>
+      </div>
+      <h2 class="text-base font-bold text-white tracking-wider mb-2">RULETA DEV</h2>
+      <div class="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-indigo-500 to-sky-400 animate-pulse w-full"></div>
+      </div>
+      <span class="text-xs text-slate-400 mt-2 font-mono" id="loadingText">Cargando temario...</span>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#hero" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+          <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+            <i class="fa-solid fa-dharmachakra text-indigo-400 text-lg group-hover:rotate-45 transition-transform duration-500"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-extrabold text-base sm:text-lg leading-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+            Ruleta Dev
+          </span>
+          <span class="block text-[10px] sm:text-xs text-slate-400" data-i18n="navSubtitle">Ingeniería de Software</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-300">
+        <a href="#hero" class="hover:text-indigo-400 transition" data-i18n="navWheel">Ruleta</a>
+        <a href="#stats" class="hover:text-indigo-400 transition" data-i18n="navStats">Progreso</a>
+        <a href="#curriculum" class="hover:text-indigo-400 transition" data-i18n="navCurriculum">Temario (24)</a>
+      </nav>
+
+      <!-- Desktop Quick Actions & Toggles -->
+      <div class="hidden sm:flex items-center gap-2">
+        <!-- Language Switcher -->
+        <button id="langToggleBtn" class="btn-micro px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700/60 flex items-center gap-1.5" title="Cambiar idioma / Switch language">
+          <i class="fa-solid fa-globe text-sky-400"></i>
+          <span id="langLabel">ES</span>
+        </button>
+
+        <!-- Dark/Light Theme Switcher -->
+        <button id="themeToggleBtn" class="btn-micro p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs border border-slate-700/60" title="Alternar modo oscuro / claro">
+          <i class="fa-solid fa-moon text-amber-300" id="themeIcon"></i>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="soundToggleBtn" class="btn-micro p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs border border-slate-700/60" title="Activar/Silenciar sonido">
+          <i class="fa-solid fa-volume-high text-indigo-400" id="soundIcon"></i>
+        </button>
+
+        <!-- JSON Modal Button -->
+        <button id="btnOpenDataModal" class="btn-micro px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/60 flex items-center gap-1.5" title="Importar o Exportar JSON">
+          <i class="fa-solid fa-arrow-right-arrow-left text-sky-400"></i>
+          <span data-i18n="btnData">Datos</span>
+        </button>
+
+        <!-- Main Spin Trigger CTA Button -->
+        <a href="#hero" onclick="triggerSpinFromCTA(event)" class="btn-micro px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1.5">
+          <i class="fa-solid fa-play text-[10px]"></i>
+          <span data-i18n="btnSpinCTA">¡Girar!</span>
+        </a>
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <div class="flex items-center gap-2 sm:hidden">
+        <button id="mobileThemeBtn" class="p-2 rounded-lg bg-slate-800 text-amber-300 text-sm border border-slate-700">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <button id="mobileMenuBtn" class="p-2 rounded-lg bg-slate-800 text-slate-200 text-base border border-slate-700 focus:outline-none" aria-label="Abrir menú">
+          <i class="fa-solid fa-bars" id="mobileMenuIcon"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Drawer Dropdown -->
+    <div id="mobileDrawer" class="hidden sm:hidden border-t border-slate-800 bg-slate-900/95 px-4 pt-3 pb-5 space-y-3">
+      <div class="grid grid-cols-3 gap-2 text-xs font-medium pb-2 border-b border-slate-800">
+        <a href="#hero" class="mobile-nav-link p-2 rounded-lg bg-slate-800/60 flex items-center justify-center gap-1.5" data-i18n="navWheel"><i class="fa-solid fa-dharmachakra text-indigo-400"></i> Ruleta</a>
+        <a href="#stats" class="mobile-nav-link p-2 rounded-lg bg-slate-800/60 flex items-center justify-center gap-1.5" data-i18n="navStats"><i class="fa-solid fa-chart-pie text-emerald-400"></i> Progreso</a>
+        <a href="#curriculum" class="mobile-nav-link p-2 rounded-lg bg-slate-800/60 flex items-center justify-center gap-1.5" data-i18n="navCurriculum"><i class="fa-solid fa-layer-group text-sky-400"></i> Temario</a>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-1">
+        <button id="mobileLangBtn" class="flex-1 py-2 px-3 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-globe text-sky-400"></i>
+          <span id="mobileLangLabel">Idioma: ES</span>
+        </button>
+
+        <button id="mobileSoundBtn" class="flex-1 py-2 px-3 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold border border-slate-700 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-volume-high text-indigo-400" id="mobileSoundIcon"></i>
+          <span id="mobileSoundLabel">Sonido</span>
+        </button>
+      </div>
+
+      <button id="mobileDataBtn" class="w-full py-2 rounded-lg bg-slate-800/80 text-slate-300 text-xs font-semibold border border-slate-700 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-arrow-right-arrow-left text-sky-400"></i>
+        <span data-i18n="btnData">Importar / Exportar JSON</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-16">
+
+    <!-- HERO SECTION WITH STAGGERED ENTRANCE -->
+    <section id="hero" class="scroll-mt-20">
+      
+      <!-- Hero Top Titles & Strategic CTA -->
+      <div class="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold mb-4 animate-hero-badge">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span data-i18n="heroBadge">Preparación para Entrevistas y Maestría Técnica</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight animate-hero-title mb-4">
+          <span data-i18n="heroTitlePart1">¿Qué deberías estudiar hoy?</span><br>
+          <span class="bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent" data-i18n="heroTitlePart2">
+            Deja que la ruleta decida tu reto.
+          </span>
+        </h1>
+
+        <p class="text-sm sm:text-base text-slate-400 leading-relaxed max-w-2xl mx-auto animate-hero-desc mb-6" data-i18n="heroSubtitle">
+          Elimina la fatiga de decisión. Gira entre 24 áreas críticas de la ingeniería de software con temporizador Pomodoro integrado y registro de progreso automático.
+        </p>
+
+        <!-- Social Share Bar Directly in Hero -->
+        <div class="flex items-center justify-center gap-2 flex-wrap text-xs text-slate-400 animate-hero-desc">
+          <span class="font-medium mr-1" data-i18n="shareLabel">Compartir con amigos dev:</span>
+          <button onclick="shareOnTwitter()" class="btn-micro px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 flex items-center gap-1.5" title="Compartir en X">
+            <i class="fa-brands fa-x-twitter"></i>
+            <span>Twitter</span>
+          </button>
+          <button onclick="shareOnLinkedIn()" class="btn-micro px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 flex items-center gap-1.5" title="Compartir en LinkedIn">
+            <i class="fa-brands fa-linkedin-in"></i>
+            <span>LinkedIn</span>
+          </button>
+          <button onclick="shareOnWhatsApp()" class="btn-micro px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex items-center gap-1.5" title="Compartir en WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>WhatsApp</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Wheel & Active Study Card Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-hero-wheel">
+        
+        <!-- Left: Roulette Container (7 Cols) -->
+        <div class="lg:col-span-7 glass-panel rounded-3xl p-5 sm:p-8 flex flex-col items-center border border-slate-800 shadow-2xl relative">
+          
+          <!-- Mode Tabs & Weighted Switch -->
+          <div class="w-full flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800/80">
+            <div class="flex items-center gap-1 p-1 bg-slate-900/90 rounded-xl border border-slate-800 text-xs font-semibold">
+              <button class="filter-btn btn-micro px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition" data-filter="all">
+                <span data-i18n="filterAll">Todos</span> (<span id="countAll">24</span>)
+              </button>
+              <button class="filter-btn btn-micro px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition" data-filter="unstudied">
+                <span data-i18n="filterUnstudied">Sin estudiar</span> (<span id="countUnstudied">24</span>)
+              </button>
+              <button class="filter-btn btn-micro px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition" data-filter="least" data-i18n="filterLeast">
+                Menos repasados
+              </button>
+            </div>
+
+            <!-- Weighted Switch -->
+            <label class="relative inline-flex items-center cursor-pointer select-none" title="Aumenta probabilidad de temas con menos repasos">
+              <input type="checkbox" id="weightedToggle" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+              <span class="ml-2 text-xs font-semibold text-slate-400 peer-checked:text-indigo-400" data-i18n="weightedLabel">Ponderar por olvido</span>
+            </label>
+          </div>
+
+          <!-- Wheel Canvas Box -->
+          <div class="wheel-wrapper my-2">
+            <!-- Wheel Arrow Pointer -->
+            <div id="wheelPointer" class="wheel-pointer">
+              <svg viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="20,48 4,10 36,10" fill="#f43f5e" stroke="#ffe4e6" stroke-width="2.5" />
+                <circle cx="20" cy="14" r="5" fill="#ffffff" />
+              </svg>
+            </div>
+
+            <!-- Canvas Element -->
+            <canvas id="wheelCanvas" width="900" height="900"></canvas>
+
+            <!-- Center Clickable Spin Disc -->
+            <button id="centerSpinBtn" class="wheel-center-button spin-pulse group btn-micro" title="Haz clic o pulsa Espacio para girar">
+              <span class="text-xs font-black tracking-widest text-sky-400 uppercase group-hover:scale-110 transition-transform" data-i18n="spinDisc">GIRAR</span>
+              <i class="fa-solid fa-play text-white text-xs mt-0.5 opacity-80"></i>
+            </button>
+          </div>
+
+          <!-- Bottom Control Bar -->
+          <div class="w-full mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800/80">
+            <div class="text-xs text-slate-400 flex items-center gap-2">
+              <kbd class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono text-[11px] shadow-sm">Espacio</kbd>
+              <span data-i18n="spacebarHint">para girar rápidamente</span>
+            </div>
+
+            <button id="mainSpinBtn" class="btn-micro ripple-effect w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-bold text-sm tracking-wide shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2.5">
+              <i class="fa-solid fa-dice text-base"></i>
+              <span data-i18n="mainSpinBtn">¡GIRAR RULETA!</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right: Active Study Panel (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+
+          <div id="studyCard" class="glass-panel glass-panel-glow rounded-3xl p-6 sm:p-7 border border-slate-800 transition-all min-h-[480px] flex flex-col justify-between">
+            
+            <!-- Idle / Initial Placeholder -->
+            <div id="studyIdleState" class="my-auto text-center py-10 px-4">
+              <div class="w-20 h-20 mx-auto rounded-3xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-500 text-3xl mb-4 shadow-inner">
+                <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 animate-pulse"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2" data-i18n="idleTitle">¡Tu ruleta está lista!</h3>
+              <p class="text-sm text-slate-400 max-w-sm mx-auto leading-relaxed" data-i18n="idleDesc">
+                Haz clic en <strong>GIRAR</strong> o presiona la barra espaciadora para seleccionar al azar un tema de ingeniería de software.
+              </p>
+              
+              <div class="mt-6 flex flex-wrap justify-center gap-2 text-xs text-slate-500">
+                <span class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800" data-i18n="pillTopics">24 temas integrados</span>
+                <span class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800" data-i18n="pillTimer">Cronómetro integrado</span>
+                <span class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800" data-i18n="pillStorage">Guardado automático</span>
+              </div>
+            </div>
+
+            <!-- Active Winner Card -->
+            <div id="studyActiveState" class="hidden flex-col gap-5 winner-pop">
+              <!-- Header with Badge & Times -->
+              <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span id="cardCategoryBadge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-indigo-600">
+                    Tema Seleccionado
+                  </span>
+                  <span id="cardStudyTimes" class="text-xs font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                    Estudiado: 0 veces
+                  </span>
+                </div>
+                <h2 id="cardCategoryTitle" class="text-2xl font-black text-white leading-tight">
+                  Nombre de la Categoría
+                </h2>
+                <div id="cardLastDate" class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                  <i class="fa-regular fa-clock text-slate-500"></i>
+                  <span>Nunca antes estudiado</span>
+                </div>
+              </div>
+
+              <!-- Suggested Subtopic Box -->
+              <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 to-slate-900/80 border border-indigo-500/30 shadow-lg">
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-crosshairs text-sky-400"></i> <span data-i18n="suggestedLabel">Enfoque sugerido para hoy</span>
+                  </span>
+                  <button id="btnRerollSubtopic" class="btn-micro text-[11px] text-slate-400 hover:text-indigo-300 transition flex items-center gap-1" title="Sugerir otro subtema">
+                    <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="btnReroll">Cambiar</span>
+                  </button>
+                </div>
+                <div id="suggestedSubtopicText" class="text-base font-semibold text-sky-200">
+                  Subtema principal
+                </div>
+              </div>
+
+              <!-- Subtopics Checklist -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5" data-i18n="subtopicsLabel">
+                  Subtemas a explorar:
+                </label>
+                <div id="subtopicsChecklist" class="space-y-2">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+
+              <!-- Built-in Study Timer -->
+              <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-stopwatch text-indigo-400"></i> <span data-i18n="timerLabel">Temporizador de Enfoque</span>
+                  </span>
+                  <div class="flex gap-1 text-[11px]">
+                    <button class="timer-preset btn-micro px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 active" data-mins="15">15m</button>
+                    <button class="timer-preset btn-micro px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-mins="25">25m</button>
+                    <button class="timer-preset btn-micro px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700" data-mins="45">45m</button>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div id="timerDisplay" class="font-mono text-3xl font-extrabold text-white tracking-wider">
+                    15:00
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button id="btnTimerToggle" class="btn-micro px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20">
+                      <i class="fa-solid fa-play" id="timerPlayIcon"></i>
+                      <span id="timerPlayText" data-i18n="timerStart">Iniciar</span>
+                    </button>
+                    <button id="btnTimerReset" class="btn-micro p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition" title="Reiniciar temporizador">
+                      <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Completion & Re-spin Actions -->
+              <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row gap-2.5">
+                <button id="btnMarkStudied" class="btn-micro flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-check-double text-sm"></i>
+                  <span data-i18n="btnCompleteStudy">Completar Estudio (+1)</span>
+                </button>
+                <button id="btnSpinAgain" class="btn-micro py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center gap-1.5 border border-slate-700/60">
+                  <i class="fa-solid fa-dice"></i>
+                  <span data-i18n="btnSpinAgain">Otro tema</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- SECTION 2: STATS SUMMARY (REVEAL ON SCROLL) -->
+    <section id="stats" class="scroll-mt-20 reveal-on-scroll">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="glass-panel interactive-hover rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl flex-shrink-0">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="statSessions">Sesiones totales</div>
+            <div class="text-2xl font-bold text-white tracking-tight" id="statTotalSessions">0</div>
+          </div>
+        </div>
+
+        <div class="glass-panel interactive-hover rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl flex-shrink-0">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="statCovered">Temas cubiertos</div>
+            <div class="text-2xl font-bold text-white tracking-tight">
+              <span id="statCoveredTopics">0</span><span class="text-sm font-normal text-slate-500">/24</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel interactive-hover rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl flex-shrink-0">
+            <i class="fa-solid fa-hourglass-start"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="statPending">Por empezar</div>
+            <div class="text-2xl font-bold text-white tracking-tight" id="statPendingTopics">24</div>
+          </div>
+        </div>
+
+        <div class="glass-panel interactive-hover rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl flex-shrink-0">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="statProgress">Progreso global</div>
+            <div class="text-2xl font-bold text-white tracking-tight" id="statPercentProgress">0%</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: CURRICULUM GRID & SEARCH (REVEAL ON SCROLL) -->
+    <section id="curriculum" class="scroll-mt-20 reveal-on-scroll glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
+            <i class="fa-solid fa-layer-group text-indigo-400"></i>
+            <span data-i18n="curriculumTitle">Temario de Ingeniería de Software</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1" data-i18n="curriculumSubtitle">
+            Personaliza qué temas entran a la ruleta o inicia una sesión de repaso directo.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Search box -->
+          <div class="relative w-full sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input type="text" id="searchInput" placeholder="Buscar categoría o subtema..." class="w-full pl-8 pr-3 py-2 bg-slate-900/90 border border-slate-700/70 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition" data-i18n-placeholder="searchPlaceholder">
+          </div>
+
+          <!-- Quick Toggle All Checkboxes -->
+          <button id="btnToggleAllTopics" class="btn-micro text-xs px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition whitespace-nowrap border border-slate-700/60" data-i18n="btnToggleAll">
+            Deseleccionar todos
+          </button>
+        </div>
+      </div>
+
+      <!-- Topics Grid Container -->
+      <div id="topicsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- STRATEGIC REPETITIVE CTA BANNER (REVEAL ON SCROLL) -->
+    <section class="reveal-on-scroll rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-sky-950 p-8 sm:p-10 border border-indigo-500/30 text-center relative overflow-hidden shadow-2xl">
+      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+        <span class="px-3 py-1 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold uppercase tracking-wider" data-i18n="ctaBannerBadge">
+          Constancia y Repetición Espaciada
+        </span>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-white" data-i18n="ctaBannerTitle">
+          ¿Listo para subir de nivel tus habilidades técnicas?
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-300" data-i18n="ctaBannerDesc">
+          Dedicarle solo 25 minutos al día a un tema aleatorio multiplica tus conocimientos en menos de un mes.
+        </p>
+        <div class="pt-2">
+          <a href="#hero" onclick="triggerSpinFromCTA(event)" class="btn-micro inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-bold text-sm shadow-xl shadow-indigo-600/40">
+            <i class="fa-solid fa-dharmachakra animate-spin-slow"></i>
+            <span data-i18n="ctaBannerButton">¡Girar la ruleta ahora!</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Mobile Bottom CTA Bar -->
+  <div id="mobileStickyCta" class="sm:hidden flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-sm">
+        <i class="fa-solid fa-dharmachakra animate-spin-slow"></i>
+      </div>
+      <div class="text-xs">
+        <div class="font-bold text-white" data-i18n="mobileBarTitle">¿Listo para estudiar?</div>
+        <div class="text-[10px] text-slate-400" data-i18n="mobileBarDesc">Gira la ruleta</div>
+      </div>
+    </div>
+    <a href="#hero" onclick="triggerSpinFromCTA(event)" class="btn-micro px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30">
+      <span data-i18n="btnSpinCTA">¡Girar!</span>
+    </a>
+  </div>
+
+  <!-- Floating Back to Top Button -->
+  <button id="backToTopBtn" aria-label="Volver arriba" title="Volver al inicio">
+    <i class="fa-solid fa-arrow-up text-sm"></i>
+  </button>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-900/60 py-10 mt-12 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid fa-dharmachakra"></i>
+        </div>
+        <span class="font-bold text-slate-200">Ruleta de Estudio de Ingeniería de Software</span>
+      </div>
+
+      <!-- Footer Social Icons -->
+      <div class="flex items-center gap-4 text-base">
+        <a href="https://github.com" target="_blank" rel="noopener" class="text-slate-400 hover:text-white transition" title="GitHub"><i class="fa-brands fa-github"></i></a>
+        <a href="https://twitter.com" target="_blank" rel="noopener" class="text-slate-400 hover:text-sky-400 transition" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener" class="text-slate-400 hover:text-blue-400 transition" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="https://whatsapp.com" target="_blank" rel="noopener" class="text-slate-400 hover:text-emerald-400 transition" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+      </div>
+
+      <div class="text-center md:text-right">
+        <span>Diseñado para potenciar tu carrera técnica &bull; Guardado 100% en local</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal: Import / Export JSON -->
+  <div id="dataModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          <i class="fa-solid fa-code text-indigo-400"></i> <span data-i18n="modalTitle">Importar / Exportar Datos JSON</span>
+        </h3>
+        <button id="btnCloseDataModal" class="text-slate-400 hover:text-white transition p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400" data-i18n="modalDesc">
+        Puedes respaldar tu historial de estudio o restaurar tus temas pegando el arreglo JSON a continuación:
+      </p>
+
+      <textarea id="jsonDataTextarea" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button id="btnCopyJson" class="btn-micro px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 transition">
+          <i class="fa-regular fa-copy"></i> <span data-i18n="btnCopy">Copiar al portapapeles</span>
+        </button>
+        
+        <div class="flex items-center gap-2">
+          <button id="btnRestoreInitial" class="btn-micro px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-amber-300 text-xs font-semibold transition" title="Restaurar a los temas originales con conteo en 0" data-i18n="btnRestore">
+            Cargar originales
+          </button>
+          <button id="btnSaveJson" class="btn-micro px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30" data-i18n="btnSaveData">
+            Guardar cambios
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
